@@ -1,4 +1,6 @@
 # SynologyPhotoShield
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg) ![Synology: DSM 7.3+](https://img.shields.io/badge/Synology-DSM%207.3%2B-blue.svg) ![Status: Stable](https://img.shields.io/badge/Status-Stable-green.svg)
+
 Advanced integration for Synology Photos (DSM 7.2/7.3+). Automatically mounts user folders using 'mount --bind', triggers incremental indexing (basic mode) without system overhead, and applies a Read-Only (RO) shield to protect original data. Solves API Error 103.
 
 
@@ -17,7 +19,7 @@ The script automates the entire lifecycle of the photo integration. It starts by
 
 
 ## Technical Requirements
-* **OS:** Synology DSM 7.2 / 7.3+
+* **OS:** Synology DSM 7.3+
 * **App:** Synology Photos
 * **Privileges:** Administrator user
 
@@ -46,6 +48,14 @@ The script automates the entire lifecycle of the photo integration. It starts by
 
 
 ## License & Disclaimer
-This project is provided "as is" for the Synology community. Use it at your own risk. The author is not responsible for any data loss or system misconfiguration; always ensure you have independent backups of your data.
+This project is licensed under the **MIT License**. 
+
+**Copyright (c) 2026 Francisco Mata Aroco**
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files, to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+*This project is provided "as is". Use it at your own risk. The author is not responsible for any data loss
 
 ---
