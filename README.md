@@ -26,6 +26,7 @@ The script automates the entire lifecycle of the photo integration. It starts by
 1. **Prepare Synology Photos:**
 * Enable **Shared Space** in the App settings.
 * Ensure the system folder `/photo` has been automatically created.
+* Grant "Full Access" to the target users in the Shared Space permissions (the script's Read-Only armor will prevent any actual deletions, while the app allows full feature usage).
 
 2. **Configure the Script:**
 * Open the script and set your **Gallery Parent Folder** (the source directory containing your gallery photos/videos and subfolders).
