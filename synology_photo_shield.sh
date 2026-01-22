@@ -4,6 +4,13 @@
 # DESCRIPTION: Securely integrates a photos-viewer of external photo libraries
 #              into Synology Photos with full app functionality and enforced
 #              Read-Only protection.
+#
+# LICENSE: MIT License
+# COPYRIGHT: (c) 2026 Francisco Mata Aroco
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software, provided that the above copyright notice is included in 
+# all copies or substantial portions of the Software.
 # ============================================================================
 # AUTHOR: Francisco Mata Aroco
 # GITHUB: https://github.com/fjmaro/SynologyPhotoShield
