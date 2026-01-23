@@ -43,7 +43,7 @@ The script automates the entire lifecycle of the photo integration. It starts by
 ## Project Metadata
 * **Author:** Francisco Mata
 * **GitHub:** [SynologyPhotoShield](https://www.google.com/search?q=https://github.com/tu-usuario/SynologyPhotoShield)
-* **Version:** 1.0
+* **Version:** 1.0.0
 * **Status:** Tested on DSM 7.3.2
 
 
