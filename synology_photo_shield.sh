@@ -14,7 +14,7 @@
 # ============================================================================
 # AUTHOR: Francisco Mata Aroco
 # GITHUB: https://github.com/fjmaro/SynologyPhotoShield
-# VERSION: 1.0
+# VERSION: 1.0.0
 # DSM VER: 7.3.2 (Tested)
 # ============================================================================
 
