@@ -43,6 +43,9 @@ SLEEP_MONITOR=15
 # Official Synology Photos CLI tool for library indexing and metadata tasks
 INDEX_TOOL="/var/packages/SynologyPhotos/target/usr/bin/synofoto-bin-index-tool"
 
+# Include manually extra folders to mount (Full absolute paths)
+EXTRA_SRC_DIRS=()
+
 # ----------------------------------------------------------------------------
 # PHASE 1: INITIALIZATION AND GLOBAL DESTINATION CLEANUP
 # ----------------------------------------------------------------------------
@@ -65,6 +68,19 @@ echo -e "\n[INFO] PHASE 2: Scanning and generating paths to be mounted..."
 SRC_PATHS=()
 DST_PATHS=()
 FOLDER_NAMES=()
+
+for extra_path in "${EXTRA_SRC_DIRS[@]}"; do
+    if [ -d "$extra_path" ]; then
+        name=$(basename "$extra_path")
+        SRC_PATHS+=("$extra_path")
+        DST_PATHS+=("$ROOT_DST/$name")
+        FOLDER_NAMES+=("$name")
+        echo "[INFO] Manual extra folder injected: [$extra_path]"
+    else
+        echo -e "\n[ERROR] Manual folder not found: [$extra_path]"
+        exit 1
+    fi
+done
 
 for path in "$ROOT_SRC"/*; do
     [ -d "$path" ] || continue
