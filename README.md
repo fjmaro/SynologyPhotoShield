@@ -1,7 +1,7 @@
 # SynologyPhotoShield
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg) ![Synology: DSM 7.3+](https://img.shields.io/badge/Synology-DSM%207.3%2B-blue.svg) ![Status: Stable](https://img.shields.io/badge/Status-Stable-green.svg)
 
-Advanced integration for Synology Photos (DSM 7.2/7.3+). Automatically mounts user folders using 'mount --bind', triggers incremental indexing (basic mode) without system overhead, and applies a Read-Only (RO) shield to protect original data. Solves API Error 103.
+Advanced integration for Synology Photos. Automatically mounts user folders using 'mount --bind', triggers incremental indexing (basic mode) without system overhead, and applies a Read-Only (RO) shield to protect original data. Solves API Error 103.
 
 
 ## The Safe Sharing Challenge
