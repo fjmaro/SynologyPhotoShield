@@ -18,9 +18,10 @@
 # DSM VER: 7.3.2 (Tested)
 # ============================================================================
 # OPERATIONAL WORKFLOW:
-#   1. PRE-CHECK: Wait for Synology Photos indexing engine to be idle.
+#   0. INITIAL CHECK: Wait for Synology Photos indexing engine to be idle.
+#   1. PATHS SCAN: Scan directory structure for the new mounts.
 #   2. CLEANUP: Clear target directory of existing mounts and empty folders.
-#   3. INITIALIZATION: Recreate directory structure for the new mounts.
+#   3. PREPARATION: Create the destination folders for the mount points.
 #   4. EXECUTION: Mount external sources and trigger indexing task.
 #   5. MONITORING: Wait for indexing process to fully complete.
 #   6. ENFORCEMENT: Secure directories with strictly Read-Only permissions.
@@ -37,8 +38,8 @@
 # Delay in seconds before the script starts, vital for 'on boot' tasks (300)
 SLEEP_START=150
 
-# Set the parent folder containing your gallery subfolders
-ROOT_SRC="/volume1/homes/<path_to_user_gallery_folder>"
+# Set your gallery folder to include all its subfolders in Synology Photos
+ROOT_SRC=""
 
 # Destination in Synology Photos Shared Space (default: /volume1/photo)
 ROOT_DST="/volume1/photo"
@@ -107,7 +108,7 @@ release_directory_mounts() {
     local target_root="${1}"
     log_info "Detecting and releasing previous mounts in $target_root..."
 
-    # Extract mounted paths specifically under the target_root
+    # Extract mounted paths specifically under the target_root. Do never add 'sort -u'.
     mount | grep "on $target_root/" | awk -F' on ' '{print $2}' | awk -F' type ' '{print $1}' | while read -r mounted_path; do
         if [ ! -z "$mounted_path" ]; then
             log_info "Releasing mount: $mounted_path"
@@ -181,41 +182,6 @@ cleanup_empty_directories() {
     return 0
 }
 
-verify_destination_security() {
-    # """
-    # Checks if existing destination directories are empty (ignoring system folders).
-    #
-    # Returns:
-    #   0: All existing folders are empty and safe.
-    #   1: Missing arguments or empty arrays.
-    #   3: Security error: An existing destination contains real data.
-    # """
-    local -n _dst_paths=$1
-    local -n _folder_names=$2
-
-    if [[ -z "$1" || ${#_dst_paths[@]} -eq 0 ]]; then
-        log_error "Security Check: No destination paths provided."
-        return 1
-    fi
-
-    for i in "${!_dst_paths[@]}"; do
-        local target="${_dst_paths[$i]}"
-        local name="${_folder_names[$i]}"
-
-        # If the directory exists, it MUST be empty
-        if [ -d "$target" ]; then
-            local real_files
-            real_files=$(ls -A "$target" 2>/dev/null | grep -vE "@eaDir|#recycle" | wc -l)
-
-            if [ "$real_files" -ne 0 ]; then
-                log_error "Security Breach: Destination [$name] is NOT empty. Data detected."
-                return 3
-            fi
-        fi
-    done
-    return 0
-}
-
 create_destination_directories() {
     # """
     # Creates destination directories if they do not exist.
@@ -246,6 +212,7 @@ create_destination_directories() {
             sleep 0.1
         else
             log_info "Destination folder already exists: $name"
+            exit 1
         fi
     done
     return 0
@@ -409,7 +376,7 @@ execute_readonly_bind_mounts() {
 }
 
 # ----------------------------------------------------------------------------
-# PHASE 1: INITIALIZATION AND DESTINATION CLEANUP
+# INITIAL CHECK
 # ----------------------------------------------------------------------------
 echo
 log_info "Waiting $SLEEP_START seconds to ensure system services are ready..."
@@ -420,16 +387,11 @@ while ! check_process_activity "$PHOTOS_ENG" "$CPU_THRESHOLD" 30; do
     log_info "Synology Photos is still active. waiting..."
 done
 
-echo
-log_info "PHASE 1: Preparing destination directory $ROOT_DST..."
-release_directory_mounts "$ROOT_DST" || exit 1
-cleanup_empty_directories "$ROOT_DST" || exit 2
-
 # ----------------------------------------------------------------------------
-# PHASE 2: SCAN AND GENERATE MOUNT PATHS
+# PHASE 1: SCAN AND GENERATE MOUNT PATHS
 # ----------------------------------------------------------------------------
 echo
-log_info "PHASE 2: Scanning paths to be mounted..."
+log_info "PHASE 1: Scanning paths to be mounted..."
 
 # Arrays to store final paths
 SRC_PATHS=()
@@ -452,43 +414,52 @@ for extra_path in "${EXTRA_SRC_DIRS[@]}"; do
 done
 
 # Discover subdirectories while skips those defined in the DISCARD exclusion list.
-for path in "$ROOT_SRC"/*; do
-    [ -d "$path" ] || continue
-    
-    # Apply DISCARD filter
-    skip=0
-    name=$(basename "$path")
-    for disc in "${DISCARD[@]}"; do
-        if [ "$name" == "$disc" ]; then
-            skip=1
-            break
+if [ -n "$ROOT_SRC" ] && [ -d "$ROOT_SRC" ]; then
+    for path in "$ROOT_SRC"/*; do
+        [ -d "$path" ] || continue
+        
+        # Apply DISCARD filter
+        skip=0
+        name=$(basename "$path")
+        for disc in "${DISCARD[@]}"; do
+            if [ "$name" == "$disc" ]; then
+                skip=1
+                break
+            fi
+        done
+        
+        if [ $skip -eq 0 ]; then
+            SRC_PATHS+=("$path")
+            DST_PATHS+=("$ROOT_DST/$name")
+            FOLDER_NAMES+=("$name")
+            log_info "Folder included in paths: [$path]"
         fi
     done
-    
-    if [ $skip -eq 0 ]; then
-        SRC_PATHS+=("$path")
-        DST_PATHS+=("$ROOT_DST/$name")
-        FOLDER_NAMES+=("$name")
-        log_info "Folder included in paths: [$path]"
-    fi
-done
+fi
 
 # ----------------------------------------------------------------------------
-# PHASE 3: PREPARE DESTINATION POINTS
+# PHASE 2: CLEAN DIRECTORY AND GENERATE MOUNT PATHS
 # ----------------------------------------------------------------------------
 echo
-log_info "PHASE 3: preparing destination points in $ROOT_DST..."
-verify_destination_security DST_PATHS FOLDER_NAMES || exit 3
-create_destination_directories DST_PATHS FOLDER_NAMES || exit 4
+log_info "PHASE 2: Preparing destination directory $ROOT_DST..."
+release_directory_mounts "$ROOT_DST" || exit 1
+cleanup_empty_directories "$ROOT_DST" || exit 2
+
+# ----------------------------------------------------------------------------
+# PHASE 3: PREPARE DESTINATION FOLDERS
+# ----------------------------------------------------------------------------
+echo
+log_info "PHASE 3: create destination directories in $ROOT_DST..."
+create_destination_directories DST_PATHS FOLDER_NAMES || exit 3
 
 # ----------------------------------------------------------------------------
 # PHASE 4: MOUNT THE FOLDERS AND LAUNCH INDEXER
 # ----------------------------------------------------------------------------
 echo
 log_info "PHASE 4: Mounting folders..."
-execute_bind_mounts SRC_PATHS DST_PATHS || exit 5
+execute_bind_mounts SRC_PATHS DST_PATHS || exit 4
 sleep 10  # Short delay for the file system to stabilize after mounting
-run_photos_index "$INDEX_TOOL" "$ROOT_DST" || exit 6
+run_photos_index "$INDEX_TOOL" "$ROOT_DST" || exit 5
 sleep 60  # Grace period for Synology Photos to initialize in the process list
 
 # ----------------------------------------------------------------------------
@@ -499,6 +470,7 @@ log_info "PHASE 5: Waiting for SynologyPhotos indexing to complete..."
 while ! check_process_activity "$PHOTOS_ENG" "$CPU_THRESHOLD" "$MONITOR_TIMEOUT"; do
     log_info "Indexing is still active. waiting..."
 done
+log_info "Synchronization complete: Indexing engine is now IDLE."
 
 # ----------------------------------------------------------------------------
 # PHASE 6: SECURE DIRECTORIES WITH READ-ONLY MOUNTS
@@ -507,6 +479,6 @@ echo
 log_info "PHASE 6: Securing directories with Read-Only bind mounts..."
 if ! execute_readonly_bind_mounts SRC_PATHS DST_PATHS; then
     log_error "Critical failure. Aborting script."
-    exit 7
+    exit 6
 fi
 log_info "All directories successfully mounted in Read-Only mode."
