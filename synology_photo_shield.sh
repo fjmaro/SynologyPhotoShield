@@ -59,8 +59,8 @@ INDEX_TOOL="/var/packages/SynologyPhotos/target/usr/bin/synofoto-bin-index-tool"
 # Internal engine to monitor before locking read-only mode.
 PHOTOS_ENG="synofoto-task-center"
 
-# Duration in seconds of the observation to monitor photos engine activity (60)
-MONITOR_TIMEOUT=60
+# Duration in seconds of the observation to monitor photos engine activity (90)
+MONITOR_TIMEOUT=90
 
 # CPU percentage threshold. Activity above this value is considered busy (6)
 CPU_THRESHOLD=6
